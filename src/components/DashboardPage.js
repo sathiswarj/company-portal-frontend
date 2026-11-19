@@ -14,7 +14,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Avatar,
   LinearProgress
 } from '@mui/material';
 import {
@@ -22,9 +21,7 @@ import {
   CheckCircle,
   TodayOutlined,
   AssignmentTurnedIn,
-  TrendingUp,
   ArrowForward,
-  Business,
   Add as AddIcon
 } from '@mui/icons-material';
 import { getDashboardStats, getLeads, getTasks } from '../services/api';
