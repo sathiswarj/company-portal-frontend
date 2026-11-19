@@ -15,7 +15,7 @@ import DashboardPage from './components/DashboardPage';
 import LeadsPage from './components/LeadsPage';
 import CompaniesPage from './components/CompaniesPage';
 import TasksPage from './components/TasksPage';
-
+import UsersPage from './components/UsersDirectory';
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('user');
@@ -61,6 +61,7 @@ function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="leads" element={<LeadsPage />} />
             <Route path="companies" element={<CompaniesPage />} />
+            <Route path="users" element={<UsersPage currentUser={currentUser} />} />
             <Route path="tasks" element={<TasksPage currentUser={currentUser} />} />
           </Route>
 

@@ -104,4 +104,15 @@ export const updateTaskStatus = async (id, status) => {
   return response.data;
 };
 
+// Users Services
+export const getUsers = async (search = '') => {
+  const response = await api.get('/users', { params: { search } });
+  return response.data;
+};
+
+export const onboardUser = async (userData) => {
+  const response = await api.post('/users', userData);
+  return response.data;
+};
+
 export default api;

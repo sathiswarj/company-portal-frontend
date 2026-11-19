@@ -18,7 +18,6 @@ import {
   Visibility,
   VisibilityOff,
   EmailOutlined,
-  LockOutlined,
   LockPersonOutlined,
   ArrowForward,
 } from '@mui/icons-material';
@@ -32,31 +31,34 @@ const Login = ({ onLoginSuccess }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const handleTogglePassword = () => setShowPassword((prev) => !prev);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    if (!email || !password) {
+    if (!email.trim() || !password) {
       setError('Please enter both your email address and password.');
       return;
     }
 
     try {
       setLoading(true);
-      const data = await login(email, password);
-      setSuccess('Authentication successful! Directing to dashboard...');
+      const data = await login(email.trim(), password);
+
       if (data.token) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
       }
+
+      setSuccess('Authentication successful! Directing to dashboard...');
       setTimeout(() => {
-        if (onLoginSuccess) {
-          onLoginSuccess(data.user);
-        }
+        if (onLoginSuccess) onLoginSuccess(data.user);
       }, 500);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Invalid email or password.';
+      const msg =
+        err.response?.data?.message || err.message || 'Invalid email or password.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -72,7 +74,7 @@ const Login = ({ onLoginSuccess }) => {
         justifyContent: 'center',
         bgcolor: '#f1f5f9',
         py: 6,
-        px: 2
+        px: 2,
       }}
     >
       <Container sx={{ maxWidth: '480px !important' }}>
@@ -82,7 +84,7 @@ const Login = ({ onLoginSuccess }) => {
             borderRadius: 3,
             overflow: 'hidden',
             border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff'
+            bgcolor: '#ffffff',
           }}
         >
           {/* Header Bar */}
@@ -95,7 +97,7 @@ const Login = ({ onLoginSuccess }) => {
               textAlign: 'center',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             <Avatar
@@ -104,16 +106,16 @@ const Login = ({ onLoginSuccess }) => {
                 width: 48,
                 height: 48,
                 mb: 1.5,
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
               }}
             >
               <LockPersonOutlined sx={{ fontSize: 28 }} />
             </Avatar>
             <Typography variant="h5" fontWeight={700} sx={{ letterSpacing: '-0.02em' }}>
-              Portal Sign In
+              MINI CRM
             </Typography>
             <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5 }}>
-              Enter your corporate credentials to continue
+              Sign in to continue
             </Typography>
           </Box>
 
@@ -135,6 +137,7 @@ const Login = ({ onLoginSuccess }) => {
             )}
 
             <Box component="form" onSubmit={handleSubmit} noValidate>
+              {/* Email */}
               <TextField
                 margin="normal"
                 required
@@ -146,7 +149,7 @@ const Login = ({ onLoginSuccess }) => {
                 autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@gmail.com"
+                placeholder="john@mail.com"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -169,27 +172,28 @@ const Login = ({ onLoginSuccess }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockOutlined color="action" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 3 }}
-              />
+                slotProps={{
+                  input: {
 
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          onClick={handleTogglePassword}
+                          onMouseDown={(e) => e.preventDefault()}
+                          edge="end"
+                        >
+                          {showPassword ? <Visibility /> : <VisibilityOff />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{
+                  mb: 3,
+                  '& input::-ms-reveal, & input::-ms-clear': { display: 'none' },
+                }}
+              />
               <Button
                 type="submit"
                 fullWidth
@@ -204,8 +208,8 @@ const Login = ({ onLoginSuccess }) => {
                   borderRadius: 2,
                   boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
                   '&:hover': {
-                    boxShadow: '0 6px 20px rgba(37, 99, 235, 0.4)'
-                  }
+                    boxShadow: '0 6px 20px rgba(37, 99, 235, 0.4)',
+                  },
                 }}
               >
                 {loading ? (
@@ -217,8 +221,6 @@ const Login = ({ onLoginSuccess }) => {
                   'Sign In'
                 )}
               </Button>
-
-
             </Box>
           </CardContent>
         </Card>

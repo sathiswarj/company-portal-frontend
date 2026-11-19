@@ -43,6 +43,7 @@ const MainLayout = ({ user, onLogout }) => {
 
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardOutlined /> },
+    { path: '/users', label: 'Users', icon: <PeopleAltOutlined /> },
     { path: '/leads', label: 'Leads', icon: <PeopleAltOutlined /> },
     { path: '/companies', label: 'Companies', icon: <BusinessOutlined /> },
     { path: '/tasks', label: 'Tasks', icon: <AssignmentOutlined /> },
@@ -150,6 +151,8 @@ const MainLayout = ({ user, onLogout }) => {
     if (location.pathname.includes('leads')) return 'Leads';
     if (location.pathname.includes('companies')) return 'Companies';
     if (location.pathname.includes('tasks')) return 'Tasks';
+    if (location.pathname.includes('users')) return 'Users';
+
     return 'Dashboard';
   };
 

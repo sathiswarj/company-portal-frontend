@@ -34,10 +34,14 @@ import {
   SearchOutlined,
   RestartAlt
 } from '@mui/icons-material';
-import { getTasks, createTask, updateTaskStatus } from '../services/api';
+import { getLeads, getTasks, createTask, updateTaskStatus, getUsers } from '../services/api';
 
 const TasksPage = ({ currentUser }) => {
   const [tasks, setTasks] = useState([]);
+  const [availableLeads, setAvailableLeads] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -50,6 +54,7 @@ const TasksPage = ({ currentUser }) => {
   const [newTask, setNewTask] = useState({
     title: 'Call',
     lead: '',
+    leadId: '',
     dueDate: '',
     assignedTo: currentUser?.email || 'admin@gmail.com'
   });
@@ -70,8 +75,44 @@ const TasksPage = ({ currentUser }) => {
     }
   };
 
+  const fetchAvailableLeads = async () => {
+    try {
+      setLeadsLoading(true);
+      const firstPage = await getLeads(1, 100);
+      if (!firstPage.success) throw new Error('Failed to fetch leads.');
+
+      const pageNumbers = Array.from(
+        { length: Math.max(0, firstPage.pagination.totalPages - 1) },
+        (_, index) => index + 2
+      );
+      const remainingPages = await Promise.all(pageNumbers.map((pageNumber) => getLeads(pageNumber, 100)));
+      setAvailableLeads([
+        ...firstPage.data,
+        ...remainingPages.flatMap((page) => page.success ? page.data : [])
+      ]);
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Failed to load leads for task creation.', severity: 'error' });
+    } finally {
+      setLeadsLoading(false);
+    }
+  };
+
+  const fetchAvailableUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const users = await getUsers();
+      setAvailableUsers(Array.isArray(users) ? users : []);
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Failed to load users for task assignment.', severity: 'error' });
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchTasksList();
+    fetchAvailableLeads();
+    fetchAvailableUsers();
   }, []);
 
   const handleClearFilters = () => {
@@ -106,7 +147,7 @@ const TasksPage = ({ currentUser }) => {
       const res = await createTask(newTask);
       if (res.success) {
         setTasks([res.data, ...tasks]);
-        setNewTask({ title: 'Call', lead: '', dueDate: '', assignedTo: loggedInUserEmail });
+        setNewTask({ title: 'Call', lead: '', leadId: '', dueDate: '', assignedTo: loggedInUserEmail });
         setOpenModal(false);
         setSnackbar({ open: true, message: 'Task created successfully!', severity: 'success' });
       }
@@ -269,9 +310,9 @@ const TasksPage = ({ currentUser }) => {
             }}
           >
             <MenuItem value="All">All Assignees</MenuItem>
-            <MenuItem value="admin@gmail.com">admin@gmail.com</MenuItem>
-            <MenuItem value="alex@company.com">alex@company.com</MenuItem>
-            <MenuItem value="emma@company.com">emma@company.com</MenuItem>
+            {availableUsers.map((user) => (
+              <MenuItem key={user._id || user.id || user.email} value={user.email}>{user.email}</MenuItem>
+            ))}
           </TextField>
 
           {/* 5. Clear Filters Button */}
@@ -322,9 +363,7 @@ const TasksPage = ({ currentUser }) => {
                 </TableRow>
               ) : filteredTasks.length > 0 ? (
                 filteredTasks.map((task) => {
-                  const canEdit =
-                    task.assignedTo?.toLowerCase() === loggedInUserEmail ||
-                    currentUser?.role === 'admin';
+                  const canEdit = task.assignedTo?.toLowerCase() === loggedInUserEmail;
                   const isDone = task.status === 'Done';
 
                   return (
@@ -455,38 +494,73 @@ const TasksPage = ({ currentUser }) => {
           </TextField>
 
           <TextField
+            select
             label="Lead Name"
             size="small"
             required
             fullWidth
-            placeholder="e.g. Ravi"
             value={newTask.lead}
-            onChange={(e) => setNewTask({ ...newTask, lead: e.target.value })}
-          />
+            disabled={leadsLoading || availableLeads.length === 0}
+            onChange={(e) => {
+              const selectedLead = availableLeads.find((lead) => lead._id === e.target.value);
+              setNewTask({
+                ...newTask,
+                lead: selectedLead?.name || '',
+                leadId: selectedLead?._id || ''
+              });
+            }}
+          >
+            {availableLeads.length ? availableLeads.map((lead) => (
+              <MenuItem key={lead._id} value={lead._id}>
+                {lead.email ? `${lead.name} (${lead.email})` : lead.name}
+              </MenuItem>
+            )) : (
+              <MenuItem value="" disabled>
+                {leadsLoading ? 'Loading leads...' : 'No leads available'}
+              </MenuItem>
+            )}
+          </TextField>
 
           <TextField
             label="Due Date"
+            type="date"
             size="small"
             required
             fullWidth
-            placeholder="e.g. 22 Jan"
             value={newTask.dueDate}
             onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+            InputLabelProps={{ shrink: true }}
           />
 
           <TextField
+            select
             label="Assign To (Email)"
             size="small"
+            required
             fullWidth
             value={newTask.assignedTo}
+            disabled={usersLoading || availableUsers.length === 0}
             onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
-          />
+          >
+            {availableUsers.length ? availableUsers.map((user) => (
+              <MenuItem key={user._id || user.id || user.email} value={user.email}>{user.email}</MenuItem>
+            )) : (
+              <MenuItem value="" disabled>
+                {usersLoading ? 'Loading users...' : 'No users available'}
+              </MenuItem>
+            )}
+          </TextField>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setOpenModal(false)} sx={{ textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleCreateTask} sx={{ textTransform: 'none', fontWeight: 600 }}>
+          <Button
+            variant="contained"
+            onClick={handleCreateTask}
+            disabled={usersLoading || availableUsers.length === 0}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
             Create Task
           </Button>
         </DialogActions>

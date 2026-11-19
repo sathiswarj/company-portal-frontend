@@ -32,7 +32,7 @@ import {
   Person,
   RestartAlt
 } from '@mui/icons-material';
-import { getLeads, createLead, updateLead, deleteLead, getCompanies } from '../services/api';
+import { getLeads, createLead, updateLead, deleteLead, getCompanies, getUsers } from '../services/api';
 
 const statusColors = {
   New: 'info',
@@ -46,13 +46,14 @@ const emptyLeadForm = {
   email: '',
   phone: '',
   status: 'New',
-  assignedTo: 'admin@gmail.com',
+  assignedTo: '',
   companyName: ''
 };
 
 const LeadsPage = () => {
   const [leads, setLeads] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -91,6 +92,15 @@ const LeadsPage = () => {
     } catch (e) {}
   };
 
+  const fetchUserList = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setAlert({ show: true, message: 'Failed to load users for lead assignment.', severity: 'error' });
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,6 +108,7 @@ const LeadsPage = () => {
 
   useEffect(() => {
     fetchCompanyList();
+    fetchUserList();
   }, []);
 
   const handleSearchSubmit = (e) => {
@@ -119,6 +130,7 @@ const LeadsPage = () => {
     setEditingId(null);
     setFormData({
       ...emptyLeadForm,
+      assignedTo: users[0]?.email || '',
       companyName: companies[0]?.name || 'ABC Corp'
     });
     setOpenModal(true);
@@ -131,7 +143,9 @@ const LeadsPage = () => {
       email: lead.email,
       phone: lead.phone || '',
       status: lead.status || 'New',
-      assignedTo: lead.assignedTo || 'admin@gmail.com',
+      assignedTo: users.some((user) => user.email === lead.assignedTo)
+        ? lead.assignedTo
+        : users[0]?.email || '',
       companyName: lead.companyName || (typeof lead.company === 'object' ? lead.company?.name : '') || ''
     });
     setOpenModal(true);
@@ -144,7 +158,10 @@ const LeadsPage = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.email) return;
+    if (!formData.name || !formData.email || !formData.assignedTo) {
+      setAlert({ show: true, message: 'Name, email, and an assigned user are required.', severity: 'error' });
+      return;
+    }
 
     try {
       if (editingId) {
@@ -300,9 +317,9 @@ const LeadsPage = () => {
             }}
           >
             <MenuItem value="All">All Assignees</MenuItem>
-            <MenuItem value="admin@gmail.com">admin@gmail.com</MenuItem>
-            <MenuItem value="alex@company.com">alex@company.com</MenuItem>
-            <MenuItem value="emma@company.com">emma@company.com</MenuItem>
+            {users.map((user) => (
+              <MenuItem key={user._id || user.id || user.email} value={user.email}>{user.email}</MenuItem>
+            ))}
           </TextField>
 
           {/* 4. Company Filter */}
@@ -491,16 +508,17 @@ const LeadsPage = () => {
           </TextField>
 
           <TextField
-            label="Assigned To [ User Dropdown ]"
+            label="Assigned To"
             size="small"
             select
+            required
             fullWidth
             value={formData.assignedTo}
             onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
           >
-            <MenuItem value="admin@gmail.com">admin@gmail.com (You)</MenuItem>
-            <MenuItem value="alex@company.com">alex@company.com</MenuItem>
-            <MenuItem value="emma@company.com">emma@company.com</MenuItem>
+            {users.map((user) => (
+              <MenuItem key={user._id || user.id || user.email} value={user.email}>{user.email}</MenuItem>
+            ))}
           </TextField>
 
           <TextField
