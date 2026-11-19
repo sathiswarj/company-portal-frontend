@@ -227,43 +227,7 @@ const Login = ({ onLoginSuccess }) => {
                 )}
               </Button>
 
-              <Divider sx={{ my: 3.5 }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary', px: 1 }}>
-                  CREDENTIALS ASSISTANCE
-                </Typography>
-              </Divider>
 
-              {/* Demo Fill Section */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: '#f8fafc',
-                  border: '1px dashed #cbd5e1'
-                }}
-              >
-                <Box>
-                  <Typography variant="caption" display="block" color="text.secondary" fontWeight={500}>
-                    Default Admin Account:
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, color: '#1e293b' }}>
-                    admin@gmail.com / admin@123
-                  </Typography>
-                </Box>
-                <Chip
-                  icon={<VpnKeyOutlined sx={{ fontSize: '1rem !important' }} />}
-                  label="Fill Form"
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                  clickable
-                  onClick={handleFillAdmin}
-                  sx={{ fontWeight: 600, borderRadius: 1.5 }}
-                />
-              </Box>
             </Box>
           </CardContent>
         </Card>
