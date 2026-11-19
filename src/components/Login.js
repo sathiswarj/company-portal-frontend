@@ -12,9 +12,7 @@ import {
   IconButton,
   Container,
   Avatar,
-  Divider,
   Fade,
-  Chip
 } from '@mui/material';
 import {
   Visibility,
@@ -23,7 +21,6 @@ import {
   LockOutlined,
   LockPersonOutlined,
   ArrowForward,
-  VpnKeyOutlined
 } from '@mui/icons-material';
 import { login } from '../services/api';
 
@@ -64,12 +61,6 @@ const Login = ({ onLoginSuccess }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFillAdmin = () => {
-    setEmail('admin@gmail.com');
-    setPassword('admin@123');
-    setError('');
   };
 
   return (
